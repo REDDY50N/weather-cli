@@ -7,15 +7,12 @@
 // API
 #include "weatherapi.h"
 
+// Test
+#include <QtNetwork/QDnsLookup>
 
 
-
-int main(int argc, char *argv[])
+void showWeather()
 {
-    QCoreApplication app(argc, argv);
-    QCoreApplication::setApplicationName("OpenWheaterMap-CLI");
-    QCoreApplication::setApplicationVersion("1.0.0");
-
     WeatherAPI w;
     QString city = "Neu-Isenburg";
     QString country_code = "DE";
@@ -32,61 +29,87 @@ int main(int argc, char *argv[])
 
     w.getSunriseTime( city, country_code );
     w.getPressure( city, country_code );
+}
 
-    // UserManager manager;
-    // manager.start();
-    // bool writeAllTriggered = false;
-    // manager.connect(&manager, &UserManager::newCurrentUser, [&manager, &writeAllTriggered]());
+int main(int argc, char *argv[])
+{
+    QCoreApplication app(argc, argv);
+    QCoreApplication::setApplicationName("OpenWheaterMap-CLI");
+    QCoreApplication::setApplicationVersion("1.0.0");
+
+    WeatherAPI w;
+    //QString city = "Neu-Isenburg";
+    QString country_code = "DE";
 
 
 
+    // Template:
+    // https://github.com/typecaster0xf/cppExamples-Qt-00_CommandLineParse/blob/master/commandParse.cpp
 
     QCommandLineParser parser;
     parser.setApplicationDescription("Description: OpenWeatherMap console application (CLI)");
     parser.addVersionOption();
     parser.addHelpOption();
 
+    // positional arguments
+    parser.addPositionalArgument("city", QCoreApplication::translate("main", "City for weather query."));
+    parser.addPositionalArgument("Country Code", QCoreApplication::translate("main", "Country Code of the city (i.e. DE)."));
 
-    parser.addOptions({
-        // A boolean option with a single name (-p)
-        {"p",
-            QCoreApplication::translate("main", "Show progress during copy")},
-        // A boolean option with multiple names (-f, --force)
-        {{"f", "force"},
-            QCoreApplication::translate("main", "Overwrite existing files.")},
-        // An option with a value
-        {{"t", "target-directory"},
-            QCoreApplication::translate("main", "Copy all source files into <directory>."),
-            QCoreApplication::translate("main", "directory")},
-    });
+    // value option (city, cc)
+    QCommandLineOption cityOption(QStringList() << "c" << "city",
+            QCoreApplication::translate("main", "Set city to <'City, DE'>."),
+            QCoreApplication::translate("main", "City"));
+    parser.addOption( cityOption );
 
-    parser.addOptions({
-        {"debug",
-            "Enable the debug mode."},
+    // temp
+    QCommandLineOption tempOption(
+            QStringList() << "t" << "temperature",
+            QCoreApplication::translate("main", "Show (now, min, max) temperature."));
+    parser.addOption( tempOption );
 
-        {{"f", "file"},
-            "Write the logs into <file>.",
-            "logfile"},
+    QCommandLineOption humidtyOption(
+            QStringList() << "a" << "humidity",
+            QCoreApplication::translate("main", "Show air pressure."));
+    parser.addOption( humidtyOption );
 
-        {{"l", "level"},
-            "Restrict the logs to level <level>. Default is 'fatal'.",
-            "level",
-            "fatal"},
-    });
+    QCommandLineOption pressureOption(
+            QStringList() << "p" << "pressure",
+            QCoreApplication::translate("main", "Show air pressure."));
+    parser.addOption( pressureOption );
 
 
     // Process the actual command line arguments given by the user
     parser.process(app);
 
+    const QStringList args = parser.positionalArguments();
+    // source is args.at(0), destination is args.at(1)
 
+    QString city = parser.value( cityOption );
 
-    qDebug() << "===============================================================";
-    qDebug() << "debug mode:" << parser.isSet("debug");
-    qDebug() << "file:" << parser.value("file");
-    qDebug() << "level:" << parser.value("level");
+    bool showTemp = parser.isSet( tempOption );
+    bool showPressure = parser.isSet( pressureOption );
+    bool showHumidity = parser.isSet( pressureOption );
 
-
-
+    if ( showTemp )
+    {
+        w.getTemperature( city, country_code );
+        return 0;
+    }
+    else if ( showPressure )
+    {
+        w.getPressure( city, country_code );
+        return 0;
+    }
+    else if ( showHumidity )
+    {
+        w.getHumidity( city, country_code );
+        return 0;
+    }
+    else
+    {
+        qDebug() << "No valid Option!";
+        return 0;
+    }
 
     return app.exec();
 }
