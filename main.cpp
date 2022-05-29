@@ -11,10 +11,10 @@
 #include <QtNetwork/QDnsLookup>
 
 
-void showWeather()
+void showWeather( QString city )
 {
     WeatherAPI w;
-    QString city = "Neu-Isenburg";
+    //QString city = "Neu-Isenburg";
     QString country_code = "DE";
 
     w.getTemperature( city, country_code );
@@ -61,15 +61,19 @@ int main(int argc, char *argv[])
             QCoreApplication::translate("main", "City"));
     parser.addOption( cityOption );
 
-    // temp
+    QCommandLineOption allOption(
+            QStringList() << "a" << "all-values",
+            QCoreApplication::translate("main", "Show (now, min, max) temperature."));
+    parser.addOption( allOption );
+
     QCommandLineOption tempOption(
             QStringList() << "t" << "temperature",
             QCoreApplication::translate("main", "Show (now, min, max) temperature."));
     parser.addOption( tempOption );
 
     QCommandLineOption humidtyOption(
-            QStringList() << "a" << "humidity",
-            QCoreApplication::translate("main", "Show air pressure."));
+            QStringList() << "x" << "humidity",
+            QCoreApplication::translate("main", "Show humidity."));
     parser.addOption( humidtyOption );
 
     QCommandLineOption pressureOption(
@@ -86,11 +90,17 @@ int main(int argc, char *argv[])
 
     QString city = parser.value( cityOption );
 
+    bool showAll = parser.isSet( allOption );
     bool showTemp = parser.isSet( tempOption );
     bool showPressure = parser.isSet( pressureOption );
     bool showHumidity = parser.isSet( pressureOption );
 
-    if ( showTemp )
+    if ( showAll )
+    {
+        showWeather( city );
+        return 0;
+    }
+    else if ( showTemp)
     {
         w.getTemperature( city, country_code );
         return 0;
@@ -107,7 +117,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        qDebug() << "No valid Option!";
+        qDebug() << "No valid Option";
         return 0;
     }
 
